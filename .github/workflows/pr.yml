@@ -1,0 +1,33 @@
+---
+name: Pull Request
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    name: Test PR for ${{ matrix.os }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: stable
+          check-latest: true
+
+      - name: Lint project
+        run: make lint
+
+      - name: Run unit tests
+        run: make test
+
+      - name: Build the project
+        run: make build
