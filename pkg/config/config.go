@@ -2,11 +2,10 @@ package config
 
 import (
 	"fmt"
+	oldCliUtils "github.com/fabric8-analytics/cli-tools/pkg/utils"
 	"github.com/rhecosystemappeng/crda-cli/pkg/utils"
 	"os"
 	"path/filepath"
-
-	oldCliUtils "github.com/fabric8-analytics/cli-tools/pkg/utils"
 
 	"github.com/spf13/viper"
 )
@@ -44,7 +43,7 @@ var KnownConfigKeyStrings = []string{
 // the environment variables or from the $HOME/.crda/config.yaml
 // returns error when failed loading/populating the config file
 func Load(configDirectory string) error {
-	utils.Logger.Debug("loading config")
+	utils.Logger.Debugf("loading config %s", configDirectory)
 	// set config file from user home
 	viper.SetConfigName(configName)
 	viper.SetConfigType(configType)

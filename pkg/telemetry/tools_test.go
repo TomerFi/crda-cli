@@ -11,7 +11,7 @@ import (
 	"io/fs"
 	"os"
 	"os/user"
-	"regexp"
+	"path/filepath"
 	"testing"
 )
 
@@ -33,7 +33,8 @@ func TestIsTelemetryConsent(t *testing.T) {
 }
 
 func TestGetUserIdFilePath(t *testing.T) {
-	assert.Regexp(t, regexp.MustCompile("[a-zA-Z]/.redhat/anonymousId$"), GetUserIdFilePath())
+	homedir, _ := os.UserHomeDir()
+	assert.Equal(t, filepath.Join(homedir, ".redhat", "anonymousId"), GetUserIdFilePath())
 }
 
 func TestCreateNewUserIdentity(t *testing.T) {
@@ -64,7 +65,8 @@ func TestGetCreateUserIdentity(t *testing.T) {
 		file, _ := os.Create(tempFilePath)
 		defer file.Close()
 
-		_, _ = file.WriteString("not_valid_uuid")
+		_, err := file.WriteString("not_valid_uuid")
+		require.NoError(t, err)
 
 		newUid, err := GetCreateUserIdentity(tempFilePath)
 		assert.NoError(t, err)

@@ -23,8 +23,13 @@ jobs:
           go-version: stable
           check-latest: true
 
+      - name: Run gofmt
+        run: make fmt
+
       - name: Lint project
-        run: make lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
 
       - name: Run unit tests
         run: make test
