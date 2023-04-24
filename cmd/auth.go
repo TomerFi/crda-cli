@@ -12,8 +12,11 @@ var authCmd = &cobra.Command{
 	Use:   "auth",
 	Short: "Link crda user with snyk",
 	Long:  "Link crda user id with provider token, i.e. Snyk to unlock Verbose stack analyses",
-	Args:  cobra.NoArgs,
-	RunE:  authenticateWithToken,
+	FParseErrWhitelist: cobra.FParseErrWhitelist{
+		UnknownFlags: true,
+	},
+	Args: cobra.NoArgs,
+	RunE: authenticateWithToken,
 }
 
 func init() {

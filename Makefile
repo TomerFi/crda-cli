@@ -1,7 +1,19 @@
-VERSION ?= 0.0.0# set version for prod ie VERSION=1.2.3 (do not use v)
+CRDA_VERSION ?= staging# set version for prod ie CRDA_VERSION=1.2.3 (do not use v)
 COMMIT_HASH ?= $(strip $(shell git rev-parse --short HEAD))
-TIMESTAMP ?=  $(strip $(shell date +%s))
-VENDOR_NAME ?= development# set to Red Hat for prod
+TIMESTAMP =  $(strip $(shell date +%s))
+BUILD_DATE = $(strip $(shell date -u +"%Y-%m-%dT%H:%M:%SZ"))
+VENDOR_NAME = Red Hat, Inc.
+
+IMAGE_BUILDER ?= podman
+IMAGE_NAME ?= quay.io/ecosystem-appeng/crda-cli
+FULL_IMAGE_NAME = $(strip $(IMAGE_NAME):$(CRDA_VERSION))
+
+# the go-toolset:1.18.10-4 image comes with:
+# - go 1.18.10
+# - python 3.9.14
+# - nodejs 16.18.1 (npm 8.19.2)
+# - java and maven are installed manually in the image
+BASE_IMAGE_NAME = registry.access.redhat.com/ubi9/go-toolset:1.18.10-4
 
 # get os and architecture and save as OS_ARCH
 ifeq ($(OS),Windows_NT)
@@ -75,20 +87,37 @@ test/cov:
 test/mut: gremlins
 
 LDFLAGS=-ldflags="\
--X 'github.com/rhecosystemappeng/crda-cli/pkg/utils.version=${VERSION}' \
+-X 'github.com/rhecosystemappeng/crda-cli/pkg/utils.version=${CRDA_VERSION}' \
 -X 'github.com/rhecosystemappeng/crda-cli/pkg/utils.commitHash=${COMMIT_HASH}' \
 -X 'github.com/rhecosystemappeng/crda-cli/pkg/utils.timestamp=${TIMESTAMP}' \
 -X 'github.com/rhecosystemappeng/crda-cli/pkg/utils.vendorInfo=${VENDOR_NAME}' \
 "
 
 .PHONY: build
-## Build the project and save it in the ./build folder, use the VERSION and VENDOR_NAME vars for prod build
+## Build the project and save it in the ./build folder, use the CRDA_VERSION and VENDOR_NAME vars for prod build
 build:
-	go build ${LDFLAGS} -o ${LOCALBUILD}/crda-${VERSION}-${OS_ARCH} main.go
+	go build ${LDFLAGS} -o ${LOCALBUILD}/crda-${CRDA_VERSION}-${OS_ARCH} main.go
 
 .PHONY: build/full
 ## Lint, test, and build the project in the ./build folder
 build/full: lint test/cov build
+
+.PHONY: build/docker
+## Build the image with using the version as a tag
+build/image:
+	digest=$(${IMAGE_BUILDER} image inspect --format '{{ index .Digest }}' ${BASE_IMAGE_NAME})
+	${IMAGE_BUILDER} build \
+	--build-arg BASE_IMAGE_NAME=${BASE_IMAGE_NAME} \
+	--build-arg BASE_IMAGE_DIGEST=${digest} \
+	--build-arg BUILD_DATE=${BUILD_DATE} \
+	--build-arg COMMIT_HASH=${COMMIT_HASH} \
+	--build-arg CRDA_VERSION=${CRDA_VERSION} \
+	--tag ${FULL_IMAGE_NAME} .
+
+.PHONY: build/image/push
+## Build the image with using the version as a tag
+build/image/push: build/image
+	${IMAGE_BUILDER} push ${FULL_IMAGE_NAME}
 
 .PHONY: lint
 ## Run linters against the project (will download golintci to the ./bin folder)

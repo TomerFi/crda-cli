@@ -1,8 +1,16 @@
 # Crda CLI 1.5
 
 This project is still in development mode.
-Staging version (Pre-release) can be found [here](https://github.com/RHEcosystemAppEng/crda-cli/releases/tag/staging).
-Download you binary based on your OS.
+For analysis, currently, only Java's Maven ecosystem is implemented.
+
+- Staging version (Pre-release) can be found [here](https://github.com/RHEcosystemAppEng/crda-cli/releases/tag/staging).
+- Sample projects can be found in the [crda-usage-examples repo](https://github.com/RHEcosystemAppEng/crda-usage-examples)
+
+## Run using executable
+
+Download the binary based on your OS from the [Releases tab](https://github.com/RHEcosystemAppEng/crda-cli/releases.
+
+The _Html_ report is saved as a local file in the OS's temporary folder.
 
 ```shell
 $ crda analyse /path/to/maven/project/pom.xml
@@ -10,7 +18,24 @@ $ crda analyse /path/to/maven/project/pom.xml
 Full Report:  file:///tmp/crda/stack-analysis-maven-1682328584.html
 ```
 
-> Currently, only Java's Maven ecosystem is implemented.
+## Run using image
+
+Running using and image will **not** create a _Html_ report.
+Instead, it will print the _Json_ version of the report.
+
+### Java
+
+From your project path (replace PWD with path if needed):
+
+```shell
+podman run --rm -it \
+    -v $HOME/.m2:/opt/app-root/src/.m2 \
+    -v $HOME/.crda:/opt/app-root/src/.crda \
+    -v $PWD:/app \
+    quay.io/ecosystem-appeng/crda-cli:staging analyse pom.xml
+```
+
+## Help
 
 ```shell
 $ crda help
@@ -31,7 +56,6 @@ Available Commands:
 Flags:
   -m, --client string   The invoking client for telemetry (default "terminal")
   -d, --debug           Set DEBUG log level
-  -h, --help            help for crda
   -c, --no-color        Toggle colors in output.
 
 Use "crda [command] --help" for more information about a command.

@@ -14,22 +14,31 @@ var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Manage crda config",
 	Long:  "Command used for managing crda config",
+	FParseErrWhitelist: cobra.FParseErrWhitelist{
+		UnknownFlags: true,
+	},
 }
 
 var configGetCmd = &cobra.Command{
 	Use:   fmt.Sprintf("get [%s]", strings.Join(config.KnownConfigKeyStrings, "|")),
 	Short: "Get crda config",
 	Long:  "Display crda config",
-	Args:  cobra.MatchAll(cobra.MaximumNArgs(1), verifyKeyExist),
-	Run:   getFromConfig,
+	FParseErrWhitelist: cobra.FParseErrWhitelist{
+		UnknownFlags: true,
+	},
+	Args: cobra.MatchAll(cobra.MaximumNArgs(1), verifyKeyExist),
+	Run:  getFromConfig,
 }
 
 var configSetCmd = &cobra.Command{
 	Use:   fmt.Sprintf("set {%s your-value}", strings.Join(config.KnownConfigKeyStrings, "|")),
 	Short: "Set crda config key.s",
 	Long:  "Set a crda config key",
-	Args:  cobra.MatchAll(cobra.ExactArgs(2), verifyKeyValueArgs),
-	RunE:  setConfigKeyValue,
+	FParseErrWhitelist: cobra.FParseErrWhitelist{
+		UnknownFlags: true,
+	},
+	Args: cobra.MatchAll(cobra.ExactArgs(2), verifyKeyValueArgs),
+	RunE: setConfigKeyValue,
 }
 
 // init is used to bind the get/set commands to the config command

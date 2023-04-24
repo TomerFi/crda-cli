@@ -2,6 +2,7 @@ package analyse
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/fatih/color"
@@ -18,7 +19,7 @@ import (
 
 type JavaMavenAnalyzer struct{}
 
-func (a *JavaMavenAnalyzer) Analyze(ctx context.Context, ecosystem string, manifestPath string, json, verbose bool) error {
+func (a *JavaMavenAnalyzer) Analyze(ctx context.Context, ecosystem string, manifestPath string, jsonOut, verboseOut bool) error {
 	mvn, err := exec.LookPath("mvn")
 	if err != nil {
 		return err
@@ -65,13 +66,28 @@ func (a *JavaMavenAnalyzer) Analyze(ctx context.Context, ecosystem string, manif
 
 	body, err := backend.AnalyzeDependencyTree(
 		backendHost,
+		ecosystem,
 		crdaKey,
 		cliClient,
 		"text/vnd.graphviz",
 		graph,
+		jsonOut,
 	)
 	if err != nil {
 		return err
+	}
+
+	if jsonOut {
+		var report []backend.DependencyAnalysisReport
+		if err := json.Unmarshal(*body, &report); err != nil {
+			return err
+		}
+		pretty, err := json.MarshalIndent(report, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(pretty))
+		return nil
 	}
 
 	htmlFileUri, err := utils.SaveReportToTempHtmlFile(*body, ecosystem)

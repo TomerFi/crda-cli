@@ -19,8 +19,11 @@ var analyseCmd = &cobra.Command{
 	Use:   fmt.Sprintf("analyse %s", strings.Join(analyse.SupportedManifestsFilenames, "|")),
 	Short: "Preform dependency analysis report",
 	Long:  "Preform dependency analysis report. Will exit with status code 2 if vulnerabilities found",
-	Args:  cobra.MatchAll(cobra.ExactArgs(1), isSupportedPath),
-	RunE:  printReport,
+	FParseErrWhitelist: cobra.FParseErrWhitelist{
+		UnknownFlags: true,
+	},
+	Args: cobra.MatchAll(cobra.ExactArgs(1), isSupportedPath),
+	RunE: printReport,
 }
 
 // init is used for setting the flags and binding the command

@@ -28,6 +28,9 @@ var rootCmd = cobra.Command{
 	Short: "CLI for interacting with the Crda platform",
 	Long:  "Use this tool for CodeReady Dependency Analytics reports",
 	// error handling is done by the handleErrors function
+	FParseErrWhitelist: cobra.FParseErrWhitelist{
+		UnknownFlags: true,
+	},
 	SilenceUsage:  true,
 	SilenceErrors: true,
 }
@@ -40,11 +43,13 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&client, "client", "m", "terminal", "The invoking client for telemetry")
 	// parse the flags manually before executing the root command
 	if err := rootCmd.ParseFlags(os.Args); err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
+		if !(strings.HasPrefix(err.Error(), "unknown flag")) {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
 	}
 	// verify the client arg
-	supportedClients := []string{"jenkins", "terminal", "tekton", "gh-actions", "intellij"}
+	supportedClients := []string{"jenkins", "terminal", "tekton", "gh-actions", "intellij", "vscode", "image"}
 	if !slices.Contains(supportedClients, client) {
 		fmt.Printf("supported clients are %s", strings.Join(supportedClients, ", "))
 		fmt.Println()
