@@ -117,15 +117,15 @@ build/image/push: build/image
 
 .PHONY: lint/all
 ## Lint the entire project (code, ci, dockerfile)
-lint/all: lint lint/actions lint/dockerfile
+lint/all: lint lint/ci lint/dockerfile
 
 .PHONY: lint
 ## Lint the code (will download golintci to the ./bin folder)
 lint: fmt golintci
 
-.PHONY: lint/actions
+.PHONY: lint/ci
 ## Lint the ci (will download actionlint to the ./bin folder)
-lint/actions:
+lint/ci:
 	actionlint
 
 .PHONY: lint/dockerfile
