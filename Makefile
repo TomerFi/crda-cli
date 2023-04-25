@@ -8,11 +8,7 @@ IMAGE_BUILDER ?= podman
 IMAGE_NAME ?= quay.io/ecosystem-appeng/crda-cli
 FULL_IMAGE_NAME = $(strip $(IMAGE_NAME):$(CRDA_VERSION))
 
-# the go-toolset:1.18.10-4 image comes with:
-# - go 1.18.10
-# - python 3.9.14
-# - nodejs 16.18.1 (npm 8.19.2)
-# - java and maven are installed manually in the image
+# if this is modified, modify the FROM instruction at the final stage in Dockerfile
 BASE_IMAGE_NAME = registry.access.redhat.com/ubi9/go-toolset:1.18.10-4
 
 # get os and architecture and save as OS_ARCH
