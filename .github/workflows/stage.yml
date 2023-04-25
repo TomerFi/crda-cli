@@ -105,7 +105,7 @@ jobs:
         run: |
           for pkg in *
           do
-            sha256sum $pkg > $pkg.sha256
+            sha256sum "$pkg" > "$pkg.sha256"
           done
 
       - name: Upload packages and checksums as staging release assets
@@ -113,12 +113,12 @@ jobs:
         run: |
           for file in *
           do
-            asset_name=$(basename $file)
+            asset_name=$(basename "$file")
             upload_url=$(echo "${{ steps.new_release.outputs.upload_url }}" | sed "s/{?name,label}/?name=$asset_name/g")
             curl --data-binary @"$file" \
             -H "Authorization: token ${{ secrets.STAGING_PAT }}" \
             -H "Content-Type: application/octet-stream" \
-            $upload_url
+            "$upload_url"
           done
 
       - name: Login quay.io
