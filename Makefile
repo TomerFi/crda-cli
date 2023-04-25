@@ -115,7 +115,7 @@ build/image:
 	--tag ${FULL_IMAGE_NAME} .
 
 .PHONY: build/image/push
-## Build the image with using the version as a tag
+## Build and push the image with using the version as a tag
 build/image/push: build/image
 	${IMAGE_BUILDER} push ${FULL_IMAGE_NAME}
 

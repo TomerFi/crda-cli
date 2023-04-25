@@ -26,7 +26,7 @@ const (
 
 var (
 	configPath        = ".crda"
-	configName        = "config1"
+	configName        = "config"
 	configType        = "yaml"
 	configHostDefault = "http://crda-backend-crda.apps.sssc-cl01.appeng.rhecoeng.com"
 )
