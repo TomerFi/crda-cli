@@ -1,5 +1,5 @@
 CRDA_VERSION ?= staging# set version for prod ie CRDA_VERSION=1.2.3 (do not use v)
-COMMIT_HASH ?= $(strip $(shell git rev-parse --short HEAD))
+COMMIT_HASH = $(strip $(shell git rev-parse --short HEAD))
 TIMESTAMP =  $(strip $(shell date +%s))
 BUILD_DATE = $(strip $(shell date -u +"%Y-%m-%dT%H:%M:%SZ"))
 VENDOR_NAME = Red Hat, Inc.
@@ -89,17 +89,17 @@ LDFLAGS=-ldflags="\
 -X 'github.com/rhecosystemappeng/crda-cli/pkg/utils.vendorInfo=${VENDOR_NAME}' \
 "
 
+.PHONY: build/all
+## Build the entire project (binary and image)
+build/all: build build/image
+
 .PHONY: build
-## Build the project and save it in the ./build folder, use the CRDA_VERSION and VENDOR_NAME vars for prod build
+## Build the project and save it in the ./build folder, use the CRDA_VERSION var for setting the version
 build:
 	go build ${LDFLAGS} -o ${LOCALBUILD}/crda-${CRDA_VERSION}-${OS_ARCH} main.go
 
-.PHONY: build/full
-## Lint, test, and build the project in the ./build folder
-build/full: lint test/cov build
-
 .PHONY: build/docker
-## Build the image with using the version as a tag
+## Build the image using the the value from the CRDA_VERSION var
 build/image:
 	digest=$(${IMAGE_BUILDER} image inspect --format '{{ index .Digest }}' ${BASE_IMAGE_NAME})
 	${IMAGE_BUILDER} build \
@@ -111,13 +111,27 @@ build/image:
 	--tag ${FULL_IMAGE_NAME} .
 
 .PHONY: build/image/push
-## Build and push the image with using the version as a tag
+## Build and push the image using the the value from the CRDA_VERSION var
 build/image/push: build/image
 	${IMAGE_BUILDER} push ${FULL_IMAGE_NAME}
 
+.PHONY: lint/all
+## Lint the entire project (code, ci, dockerfile)
+lint/all: lint lint/actions lint/dockerfile
+
 .PHONY: lint
-## Run linters against the project (will download golintci to the ./bin folder)
+## Lint the code (will download golintci to the ./bin folder)
 lint: fmt golintci
+
+.PHONY: lint/actions
+## Lint the ci (will download actionlint to the ./bin folder)
+lint/actions:
+	actionlint
+
+.PHONY: lint/dockerfile
+## Lint the Dockerfile (using Hadolint image, do not use inside a container)
+lint/dockerfile:
+	${IMAGE_BUILDER} run --rm -i docker.io/hadolint/hadolint:latest < Dockerfile
 
 .PHONY: fmt
 fmt:
@@ -131,6 +145,16 @@ golintci: ${GOLINTCI_BIN}
 
 ${GOLINTCI_BIN}:
 	GOBIN=${LOCALBIN} go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+ACTIONLINT_BIN = ${LOCALBIN}/actionlint
+
+.PHONY: actionlint
+actionlint: ${ACTIONLINT_BIN}
+	${ACTIONLINT_BIN} --verbose
+
+# recommendation: manually install shellcheck and verify it's on your PATH, it will be picked up by actionlint
+${ACTIONLINT_BIN}:
+	GOBIN=${LOCALBIN} go install github.com/rhysd/actionlint/cmd/actionlint@latest
 
 GREMLINS_BIN = ${LOCALBIN}/gremlins
 

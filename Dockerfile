@@ -11,7 +11,9 @@ WORKDIR /crda
 COPY . .
 # build and sanitize file name (ie crda-1.2.3-linux-amd64 >>> crda)
 RUN make build \
-    && mv $(find build -name 'crda*') build/crda
+    && mv "$(find build -name 'crda*')" build/crda
+USER default
+
 
  # if the base image here is modified, modify BASE_IMAGE_NAME in Makefile as well
 FROM registry.access.redhat.com/ubi9/go-toolset:1.18.10-4
