@@ -124,7 +124,9 @@ jobs:
         # pre-installed podman version is  3.4.4 and buildah 1.23.1
         # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md
       - name: Upgrade podman and buildah
-        run: apt-get -y upgrade podman buildah
+        run: |
+          sudo apt-get update
+          sudo apt-get -y upgrade podman buildah
 
       - name: Login quay.io
         uses: redhat-actions/podman-login@v1
