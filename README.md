@@ -8,7 +8,7 @@ For analysis, currently, only Java's Maven ecosystem is implemented.
 
 ## Run using executable
 
-Download the binary based on your OS from the [Releases tab](https://github.com/RHEcosystemAppEng/crda-cli/releases.
+Download the binary based on your OS from the [Releases tab](https://github.com/RHEcosystemAppEng/crda-cli/releases).
 
 The _Html_ report is saved as a local file in the OS's temporary folder.
 
