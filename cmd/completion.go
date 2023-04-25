@@ -21,9 +21,12 @@ var completionCmd = &cobra.Command{
 	crda completion powershell
 	`,
 	DisableFlagsInUseLine: true, // flags such as debug are useless here, will mess up the script
-	ValidArgs:             validShells,
-	Args:                  cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
-	RunE:                  printCompletionScript,
+	FParseErrWhitelist: cobra.FParseErrWhitelist{
+		UnknownFlags: true,
+	},
+	ValidArgs: validShells,
+	Args:      cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
+	RunE:      printCompletionScript,
 }
 
 func init() {

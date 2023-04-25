@@ -11,8 +11,11 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Get binary version",
 	Long:  "Command to output version of the binary",
-	Args:  cobra.NoArgs,
-	Run:   printVersion,
+	FParseErrWhitelist: cobra.FParseErrWhitelist{
+		UnknownFlags: true,
+	},
+	Args: cobra.NoArgs,
+	Run:  printVersion,
 }
 
 func init() {
