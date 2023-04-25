@@ -47,6 +47,12 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.STAGING_PAT }}
 
+      - name: Cache image layers
+        uses: actions/cache@v3
+        with:
+          path: /var/lib/containers
+          key: ${{ runner.os }}-image-${{ hashFiles('**/Dockerfile') }}
+
       - name: Download build artifacts
         uses: actions/download-artifact@v3
         with:
