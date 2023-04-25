@@ -1,7 +1,7 @@
 FROM registry.access.redhat.com/ubi9/go-toolset:1.18.10-4 as build
 # args required for image labels
-ARG BASE_IMAGE_NAME
 ARG BASE_IMAGE_DIGEST
+ARG BASE_IMAGE_NAME
 ARG BUILD_DATE
 ARG COMMIT_HASH
 ARG CRDA_VERSION
@@ -9,14 +9,21 @@ USER root
 # build crda cli
 WORKDIR /crda
 COPY . .
-# build and sanytize file name (ie crda-1.2.3-linux-amd64 >>> crda)
+# build and sanitize file name (ie crda-1.2.3-linux-amd64 >>> crda)
 RUN make build \
     && mv $(find build -name 'crda*') build/crda
 
-ARG BASE_IMAGE_NAME=registry.access.redhat.com/ubi9/go-toolset:1.18.10-4
-FROM $BASE_IMAGE_NAME
+ # if the base image here is modified, modify BASE_IMAGE_NAME in Makefile as well
+FROM registry.access.redhat.com/ubi9/go-toolset:1.18.10-4
+# the go-toolset:1.18.10-4 image comes with:
+# - go 1.18.10
+# - python 3.9.14
+# - nodejs 16.18.1 (npm 8.19.2)
+# - java and maven are installed manually later
+
 # args required for image labels
 ARG BASE_IMAGE_DIGEST
+ARG BASE_IMAGE_NAME
 ARG BUILD_DATE
 ARG COMMIT_HASH
 ARG CRDA_VERSION
