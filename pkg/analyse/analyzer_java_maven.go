@@ -3,6 +3,7 @@ package analyse
 import (
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"github.com/fatih/color"
@@ -15,7 +16,23 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
+
+type PomProject struct {
+	Dependencies PomDependencies `xml:"dependencies"`
+}
+
+type PomDependencies struct {
+	Dependency []PomDependency `xml:"dependency"`
+}
+
+type PomDependency struct {
+	Comment    string `xml:",comment"`
+	GroupId    string `xml:"groupId"`
+	ArtifactId string `xml:"artifactId"`
+	Version    string `xml:"version,omitempty"`
+}
 
 type JavaMavenAnalyzer struct{}
 
@@ -32,8 +49,14 @@ func (a *JavaMavenAnalyzer) Analyze(ctx context.Context, ecosystem string, manif
 		os.Remove(tmpDesTree) // if the temp file exists - remove it
 	}
 
+	treeCommand := []string{"-q", "dependency:tree", "-DoutputType=dot", fmt.Sprintf("-DoutputFile=%s", tmpDesTree), "-f", manifestPath}
+	if ignoredList := getIgnored(manifestPath); len(ignoredList) > 0 {
+		treeCommand = append(treeCommand, fmt.Sprintf("-Dexcludes=%s", strings.Join(ignoredList, ",")))
+	}
+
+	// execute commands to create a tree graph
 	cleanExec := exec.Command(mvn, "-q", "clean", "-f", manifestPath)
-	treeExec := exec.Command(mvn, "-q", "dependency:tree", "-DoutputType=dot", fmt.Sprintf("-DoutputFile=%s", tmpDesTree), "-f", manifestPath)
+	treeExec := exec.Command(mvn, treeCommand...)
 
 	if err := cleanExec.Run(); err != nil {
 		return err
@@ -100,4 +123,35 @@ func (a *JavaMavenAnalyzer) Analyze(ctx context.Context, ecosystem string, manif
 	fmt.Println(white("Full Report: "), htmlFileUri)
 
 	return nil
+}
+
+// getIgnored takes pom.xml path and return a list of exclusion strings for dependencies marked for ignore.
+// you can add a <!-- crdaignore --> comment next to any element in the confines of <dependency>...</dependency>
+// and it will be included in list returned.
+// for reference, our exclusion strings looks like this "group-id:artifact-d:*:version", if no <version> element,
+// will use *
+func getIgnored(manifestPath string) []string {
+	// load pom.xml manifest
+	fileContent, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return nil
+	}
+	// deserialize the file content
+	var pomProject PomProject
+	if err := xml.Unmarshal(fileContent, &pomProject); err != nil {
+		return nil
+	}
+	// populate the ignored list
+	var ignoredList []string
+	for _, dep := range pomProject.Dependencies.Dependency {
+		if strings.Contains(dep.Comment, "crdaignore") {
+			ver := "*"
+			if dep.Version != "" {
+				ver = dep.Version
+			}
+			ignoredList = append(ignoredList, fmt.Sprintf("%s:%s:*:%s", dep.GroupId, dep.ArtifactId, ver))
+		}
+	}
+
+	return ignoredList
 }
