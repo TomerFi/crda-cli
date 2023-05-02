@@ -39,6 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Create a Staging release
     environment: staging
+    if: github.repository == 'RHEcosystemAppEng/crda-cli'
     needs: build
     steps:
       - name: Checkout sources
