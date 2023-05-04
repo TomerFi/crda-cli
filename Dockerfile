@@ -41,7 +41,7 @@ RUN curl https://dlcdn.apache.org/maven/maven-3/3.9.1/binaries/apache-maven-3.9.
     && ln -s /usr/share/maven/bin/mvn /usr/bin/mvn \
     && rm -r apache-maven-3.9.1*
 # symlinks for python3 and pip3 >> python and pip
-RUN ln -s /usr/bin/python3 /usr/bin/python & \
+RUN ln -s /usr/bin/python3 /usr/bin/python && \
     ln -s /usr/bin/pip3 /usr/bin/pip
 # copy crda cli
 COPY --from=build /crda/build/crda /usr/bin/crda
