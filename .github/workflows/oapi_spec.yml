@@ -3,6 +3,8 @@ name: Verify OpenAPI Spec
 
 on:
   workflow_dispatch:
+  repository_dispatch:
+    types: [ backend-openapi-spec-modified ]
 
 jobs:
   verify_no_generated:
