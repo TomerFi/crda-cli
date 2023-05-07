@@ -7,13 +7,13 @@ import (
 	"os"
 )
 
-type Analyzer interface {
-	Analyze(ctx context.Context, ecosystem string, manifestPath string, json, verbose bool) error
+type TreeProvider interface {
+	Provide(ctx context.Context, manifestPath string) ([]byte, string, error)
 }
 
 type Manifest struct {
 	Filename, Ecosystem string
-	Analyzer
+	TreeProvider
 }
 
 type Provider string
@@ -27,7 +27,7 @@ func (p Provider) ToString() string {
 }
 
 var (
-	JavaMaven = Manifest{"pom.xml", "maven", &JavaMavenAnalyzer{}}
+	JavaMaven = Manifest{"pom.xml", "maven", &JavaMavenTreeProvider{}}
 	PythonPip = Manifest{"requirements.txt", "maven", nil}
 	NodeJS    = Manifest{"package.json", "npm", nil}
 	GoModule  = Manifest{"go.mod", "go", nil}

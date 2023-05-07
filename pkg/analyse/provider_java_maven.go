@@ -2,16 +2,9 @@ package analyse
 
 import (
 	"context"
-	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/rhecosystemappeng/crda-cli/pkg/backend"
-	"github.com/rhecosystemappeng/crda-cli/pkg/config"
-	"github.com/rhecosystemappeng/crda-cli/pkg/telemetry"
-	"github.com/rhecosystemappeng/crda-cli/pkg/utils"
-	"github.com/spf13/viper"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -34,12 +27,12 @@ type PomDependency struct {
 	Version    string `xml:"version,omitempty"`
 }
 
-type JavaMavenAnalyzer struct{}
+type JavaMavenTreeProvider struct{}
 
-func (a *JavaMavenAnalyzer) Analyze(ctx context.Context, ecosystem string, manifestPath string, jsonOut, verboseOut bool) error {
+func (a *JavaMavenTreeProvider) Provide(ctx context.Context, manifestPath string) ([]byte, string, error) {
 	mvn, err := exec.LookPath("mvn")
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	tmpDesTree := filepath.Join(os.TempDir(), "tmp-deps-tree.txt")
@@ -55,74 +48,23 @@ func (a *JavaMavenAnalyzer) Analyze(ctx context.Context, ecosystem string, manif
 	}
 
 	// execute commands to create a tree graph
-	cleanExec := exec.Command(mvn, "-q", "clean", "-f", manifestPath)
-	treeExec := exec.Command(mvn, treeCommand...)
+	cleanExec := exec.CommandContext(ctx, mvn, "-q", "clean", "-f", manifestPath)
+	treeExec := exec.CommandContext(ctx, mvn, treeCommand...)
 
 	if err := cleanExec.Run(); err != nil {
-		return err
+		return nil, "", err
 	}
 
 	if err := treeExec.Run(); err != nil {
-		return err
+		return nil, "", err
 	}
 
 	graph, err := os.ReadFile(tmpDesTree)
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
-	cliClient, _ := telemetry.GetProperty(ctx, telemetry.KeyClient)
-	oldHost := viper.GetString(config.KeyOldHost.ToString())                // TODO remove this once done with old backend
-	threeScaleToken := viper.GetString(config.KeyOld3ScaleToken.ToString()) // TODO remove this once done with old backend
-	backendHost := viper.GetString(config.KeyBackendHost.ToString())
-
-	// if we don't already have a crda user key, ask the backend for an ew one
-	var crdaKey string
-	if !viper.IsSet(config.KeyCrdaKey.ToString()) {
-		if newUserKey, err := backend.RequestNewUserKey(oldHost, threeScaleToken, cliClient); err == nil {
-			crdaKey = newUserKey
-			viper.Set(config.KeyCrdaKey.ToString(), newUserKey)
-		}
-	} else {
-		crdaKey = viper.GetString(config.KeyCrdaKey.ToString())
-	}
-
-	body, err := backend.AnalyzeDependencyTree(
-		backendHost,
-		ecosystem,
-		crdaKey,
-		cliClient,
-		"text/vnd.graphviz",
-		graph,
-		jsonOut,
-	)
-	if err != nil {
-		return err
-	}
-
-	if jsonOut {
-		var report []backend.DependencyAnalysisReport
-		if err := json.Unmarshal(*body, &report); err != nil {
-			return err
-		}
-		pretty, err := json.MarshalIndent(report, "", "  ")
-		if err != nil {
-			return err
-		}
-		fmt.Println(string(pretty))
-		return nil
-	}
-
-	htmlFileUri, err := utils.SaveReportToTempHtmlFile(*body, ecosystem)
-	if err != nil {
-		return err
-	}
-
-	// TODO replace this with logic for printing verbose/non-verbose json/non-json summary
-	white := color.New(color.FgHiWhite, color.Bold).SprintFunc()
-	fmt.Println(white("Full Report: "), htmlFileUri)
-
-	return nil
+	return graph, "text/vnd.graphviz", nil
 }
 
 // getIgnored takes pom.xml path and return a list of exclusion strings for dependencies marked for ignore.

@@ -3,4 +3,7 @@ bin
 build
 main
 http_requests
+json_responses
 cov.*
+# this is from the backend
+openapi.yaml

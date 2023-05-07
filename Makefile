@@ -4,6 +4,8 @@ TIMESTAMP =  $(strip $(shell date +%s))
 BUILD_DATE = $(strip $(shell date -u +"%Y-%m-%dT%H:%M:%SZ"))
 VENDOR_NAME = Red Hat, Inc.
 
+COVERAGE_THRESHOLD ?= 60
+
 IMAGE_BUILDER ?= podman
 IMAGE_NAME ?= quay.io/ecosystem-appeng/crda-cli
 FULL_IMAGE_NAME = $(strip $(IMAGE_NAME):$(CRDA_VERSION))
@@ -12,51 +14,13 @@ FULL_IMAGE_NAME = $(strip $(IMAGE_NAME):$(CRDA_VERSION))
 BASE_IMAGE_NAME = registry.access.redhat.com/ubi9/go-toolset:1.18.10-4
 
 # get os and architecture and save as OS_ARCH
-ifeq ($(OS),Windows_NT)
-	ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)
-		OS_ARCH := win32-amd64
-	endif
-	ifeq ($(PROCESSOR_ARCHITECTURE),x86)
-		OS_ARCH := win32-ia32
-	endif
-else
-	UNAME_S := $(shell uname -s)
-	ifeq ($(UNAME_S),Linux)
-		OS_ARCH := linux
-	endif
-	ifeq ($(UNAME_S),Darwin)
-		OS_ARCH := darwin
-	endif
-	UNAME_P := $(shell uname -p)
-	ifeq ($(UNAME_P),x86_64)
-		OS_ARCH := ${OS_ARCH}-amd64
-	endif
-	ifneq ($(filter %86,$(UNAME_P)),)
-		OS_ARCH := ${OS_ARCH}-ia32
-	endif
-	ifneq ($(filter arm%,$(UNAME_P)),)
-		OS_ARCH := ${OS_ARCH}-arm
-	endif
-endif
+OS_ARCH = $(shell go env GOOS)-$(shell go env GOARCH)
 
 default: help
 
 .PHONY: help
 ## This help screen
-help:
-	@printf "Available targets:\n\n"
-	@awk '/^[a-zA-Z\-_0-9%:\\]+/ { \
-	  helpMessage = match(lastLine, /^## (.*)/); \
-	  if (helpMessage) { \
-	    helpCommand = $$1; \
-	    helpMessage = substr(lastLine, RSTART + 3, RLENGTH); \
-      gsub("\\\\", "", helpCommand); \
-      gsub(":+$$", "", helpCommand); \
-	    printf "  \x1b[32;01m%-35s\x1b[0m %s\n", helpCommand, helpMessage; \
-	  } \
-	} \
-	{ lastLine = $$0 }' $(MAKEFILE_LIST) | sort -u
-	@printf "\n"
+help: make2help
 
 LOCALBIN = $(shell pwd)/bin
 $(LOCALBIN):
@@ -66,15 +30,21 @@ LOCALBUILD = $(shell pwd)/build
 $(LOCALBUILD):
 	mkdir -p $(LOCALBUILD)
 
+OPENAPI_FILENAME = openapi.yaml
+OPENAPI_SPEC = $(shell pwd)/${OPENAPI_FILENAME}
+
 .PHONY: test
 ## Run all unit tests
 test:
 	go test -v ./...
 
 .PHONY: test/cov
-## Run all unit tests and print coverage report
-test/cov:
-	go test -coverprofile=cov.out -v ./...
+## Run all unit tests and print coverage report, use the COVERAGE_THRESHOLD var for setting threshold
+test/cov: test/cov/report go-test-coverage
+
+.PHONY: test/cov/report
+test/cov/report:
+	go test -failfast -coverprofile=cov.out -v ./...
 	go tool cover -func=cov.out
 	go tool cover -html=cov.out -o cov.html
 
@@ -98,7 +68,7 @@ build/all: build build/image
 build:
 	go build ${LDFLAGS} -o ${LOCALBUILD}/crda-${CRDA_VERSION}-${OS_ARCH} main.go
 
-.PHONY: build/docker
+.PHONY: build/image
 ## Build the image using the the value from the CRDA_VERSION var
 build/image:
 	digest=$(${IMAGE_BUILDER} image inspect --format '{{ index .Digest }}' ${BASE_IMAGE_NAME})
@@ -125,13 +95,24 @@ lint: fmt golintci
 
 .PHONY: lint/ci
 ## Lint the ci (will download actionlint to the ./bin folder)
-lint/ci:
-	actionlint
+lint/ci: actionlint
 
 .PHONY: lint/dockerfile
 ## Lint the Dockerfile (using Hadolint image, do not use inside a container)
 lint/dockerfile:
 	${IMAGE_BUILDER} run --rm -i docker.io/hadolint/hadolint:latest < Dockerfile
+
+.PHONY: generate/openapi
+## Generate code from an ./openapi.yaml spec file (do not use in CI)
+generate/openapi: oapi_codegen
+
+.PHONY: download/openapi
+## Download the backend's openapi.yaml specification file and save at the project's root
+download/openapi: remove/${OPENAPI_FILENAME} ${OPENAPI_SPEC}
+
+.PHONY: remove/${OPENAPI_FILENAME}
+remove/${OPENAPI_FILENAME}:
+	rm -f ${OPENAPI_FILENAME}
 
 .PHONY: fmt
 fmt:
@@ -164,3 +145,34 @@ gremlins: ${GREMLINS_BIN}
 
 ${GREMLINS_BIN}:
 	GOBIN=${LOCALBIN} go install github.com/go-gremlins/gremlins/cmd/gremlins@latest
+
+OAPI_CODEGEN_BIN = ${LOCALBIN}/oapi-codegen
+
+.PHONY: oapi_codegen
+oapi_codegen: ${OAPI_CODEGEN_BIN} ${OPENAPI_SPEC}
+	${OAPI_CODEGEN_BIN} -generate types -package api -o pkg/backend/api/types_generated.go ${OPENAPI_SPEC}
+
+${OAPI_CODEGEN_BIN}:
+	GOBIN=${LOCALBIN} go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest
+
+${OPENAPI_SPEC}:
+	wget https://raw.githubusercontent.com/RHEcosystemAppEng/crda-backend/main/src/main/resources/META-INF/${OPENAPI_FILENAME}
+
+MAKE2HELP_BIN = ${LOCALBIN}/make2help
+
+.PHONY: make2help
+make2help: ${MAKE2HELP_BIN}
+	@printf "Available targets:\n\n"
+	@${MAKE2HELP_BIN}  $(MAKEFILE_LIST)
+	@printf "\n"
+
+${MAKE2HELP_BIN}:
+	GOBIN=${LOCALBIN} go install github.com/Songmu/make2help/cmd/make2help@latest
+
+GO_TEST_COVERAGE_BIN = ${LOCALBIN}/go-test-coverage
+
+go-test-coverage: ${GO_TEST_COVERAGE_BIN}
+	${GO_TEST_COVERAGE_BIN} -p cov.out -k 0 -t ${COVERAGE_THRESHOLD}
+
+${GO_TEST_COVERAGE_BIN}:
+	GOBIN=${LOCALBIN} go install github.com/vladopajic/go-test-coverage/v2@latest

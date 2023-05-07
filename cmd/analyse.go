@@ -23,7 +23,7 @@ var analyseCmd = &cobra.Command{
 		UnknownFlags: true,
 	},
 	Args: cobra.MatchAll(cobra.ExactArgs(1), isSupportedPath),
-	RunE: printReport,
+	RunE: analyseManifest,
 }
 
 // init is used for setting the flags and binding the command
@@ -33,9 +33,9 @@ func init() {
 	rootCmd.AddCommand(analyseCmd)
 }
 
-// printReport will print the requested report (stack analysis)
+// analyseManifest will print the requested report (stack analysis)
 // returns error if failed generating invoking backend analysis
-func printReport(cmd *cobra.Command, args []string) error {
+func analyseManifest(cmd *cobra.Command, args []string) error {
 	utils.Logger.Debug("executing analyse command")
 	file, err := os.Stat(args[0])
 	if err != nil {
@@ -45,7 +45,11 @@ func printReport(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	return analyse.StackReport(cmd.Context(), manifest, args[0], jsonOutput, verboseOutput)
+	// TODO remove this once support for go, node_js, and python_pip is done
+	if manifest.TreeProvider == nil {
+		return fmt.Errorf("sorry, this is a wip, support for %s is not yet active", manifest.Filename)
+	}
+	return analyse.GetStackReport(cmd.Context(), manifest, args[0], jsonOutput, verboseOutput)
 }
 
 // isSupportedPath will return an error if the manifest file is unsupported/unknown
