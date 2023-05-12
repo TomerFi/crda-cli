@@ -10,6 +10,7 @@ jobs:
   verify_no_generated:
     runs-on: ubuntu-latest
     name: Verify Backend OpenAPI Spec
+    environment: integration
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3

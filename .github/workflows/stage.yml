@@ -42,18 +42,6 @@ jobs:
     if: github.repository == 'RHEcosystemAppEng/crda-cli'
     needs: build
     steps:
-      - name: Checkout sources
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.STAGING_PAT }}
-
-      - name: Cache image layers
-        uses: actions/cache@v3
-        with:
-          path: /var/lib/containers
-          key: ${{ runner.os }}-image-${{ hashFiles('**/Dockerfile') }}
-
       - name: Download build artifacts
         uses: actions/download-artifact@v3
         with:
@@ -127,6 +115,22 @@ jobs:
             -H "Content-Type: application/octet-stream" \
             "$upload_url"
           done
+
+  image:
+    runs-on: ubuntu-latest
+    name: Push staging image to Quay.io
+    environment: staging
+    if: github.repository == 'RHEcosystemAppEng/crda-cli'
+    needs: build
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+
+      - name: Cache image layers
+        uses: actions/cache@v3
+        with:
+          path: /var/lib/containers
+          key: ${{ runner.os }}-image-${{ hashFiles('**/Dockerfile') }}
 
       - name: Login quay.io
         uses: redhat-actions/podman-login@v1
