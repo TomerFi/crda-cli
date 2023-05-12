@@ -129,7 +129,7 @@ jobs:
       - name: Cache image layers
         uses: actions/cache@v3
         with:
-          path: /var/lib/containers
+          path: /home/runner/.local/share/containers/storage/
           key: ${{ runner.os }}-image-${{ hashFiles('**/Dockerfile') }}
 
       - name: Login quay.io
