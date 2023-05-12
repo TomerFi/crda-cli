@@ -19,10 +19,10 @@ type VulnerabilitiesSummary struct {
 	SnykTokenStatus                       bool `json:"snyk_token_status"`
 }
 
-func processVulnerabilities(reports []api.DependencyReport) VulnerabilitiesSummary {
+func processVulnerabilities(reports []api.DependencyReport) (VulnerabilitiesSummary, error) {
 	summary := VulnerabilitiesSummary{}
 	// TODO waiting for this https://github.com/RHEcosystemAppEng/crda-backend/issues/28
 	// we need to land on a response design that will good for all,
 	// the VulnerabilitiesSummary fields were copied as-is from the old cli for reference
-	return summary
+	return summary, nil
 }

@@ -32,6 +32,7 @@ func TestAnalyzeDependencyTree(t *testing.T) {
 			"some-client",
 			"fake/contenttype",
 			[]byte("fake-content"),
+			false,
 		)
 
 		assert.NoError(t, err)
@@ -59,6 +60,7 @@ func TestAnalyzeDependencyTree(t *testing.T) {
 			"some-client2",
 			"fake/contenttype2",
 			[]byte("fake-content"),
+			false,
 		)
 
 		assert.Error(t, err)

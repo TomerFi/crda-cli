@@ -2,23 +2,15 @@ package analyse
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"github.com/fatih/color"
 	"github.com/rhecosystemappeng/crda-cli/pkg/backend"
 	"github.com/rhecosystemappeng/crda-cli/pkg/config"
 	"github.com/rhecosystemappeng/crda-cli/pkg/prompts"
 	"github.com/rhecosystemappeng/crda-cli/pkg/telemetry"
 	"github.com/spf13/viper"
 	"mime"
-	"mime/multipart"
 	"net/http"
 )
-
-type summaryAndReport struct {
-	VulnerabilitiesSummary
-	ReportFileUri string
-}
 
 // GetStackReport is used for requesting a stack analysis from the backend server
 // It will print a human-readable report summary to the standard output
@@ -62,21 +54,15 @@ func GetStackReport(ctx context.Context, manifest *Manifest, manifestPath string
 		cliClient,
 		contentType,
 		content,
+		jsonOut,
 	)
 	if err != nil {
 		telemetry.SetProperty(ctx, telemetry.KeySuccess, false)
 		telemetry.SetProperty(ctx, telemetry.KeyError, telemetry.MaskErrorContent(err))
 		return err
 	}
-	// analyse the response and get the vulnerabilities summary and report uri
-	sumAndReport, err := parseResponse(response, manifest)
-	if err != nil {
-		telemetry.SetProperty(ctx, telemetry.KeySuccess, false)
-		telemetry.SetProperty(ctx, telemetry.KeyError, telemetry.MaskErrorContent(err))
-		return err
-	}
-	// print the report uri and summary to the standard output
-	if err := printSummary(sumAndReport, jsonOut); err != nil {
+	// analyse the response and print the summary
+	if err := parseResponse(response, manifest); err != nil {
 		telemetry.SetProperty(ctx, telemetry.KeySuccess, false)
 		telemetry.SetProperty(ctx, telemetry.KeyError, telemetry.MaskErrorContent(err))
 		return err
@@ -86,63 +72,22 @@ func GetStackReport(ctx context.Context, manifest *Manifest, manifestPath string
 	return nil
 }
 
-// parseResponse is used to verify the backend stack analysis response, parse its body,
-// and return a summary including the local uri for the report
-// it will return an error if the response is not ok, it used an unknown body type,
-// or failed to deserialize and parse the body
-func parseResponse(response *http.Response, manifest *Manifest) (summaryAndReport, error) {
+func parseResponse(response *http.Response, manifest *Manifest) error {
 	if response.StatusCode != http.StatusOK {
-		return summaryAndReport{}, fmt.Errorf("analyze dependencies request failed, %s", response.Status)
+		return fmt.Errorf("analyze dependencies request failed, %s", response.Status)
 	}
 
 	bodyType, params, err := mime.ParseMediaType(response.Header.Get("Content-Type"))
 	if err != nil {
-		return summaryAndReport{}, err
-	}
-	if "multipart/mixed" != bodyType {
-		return summaryAndReport{}, fmt.Errorf("content type %s is not supported", bodyType)
+		return err
 	}
 
-	var vulSummary VulnerabilitiesSummary
-	var reportUri string
-
-	multipartReader := multipart.NewReader(response.Body, params["boundary"])
-	for part, err := multipartReader.NextPart(); err == nil; part, err = multipartReader.NextPart() {
-		partType := part.Header.Get("Content-Type")
-		switch partType {
-		case "application/json":
-			if reports, err := backend.ParseJsonResponse(part); err != nil {
-				return summaryAndReport{}, err
-			} else {
-				vulSummary = processVulnerabilities(reports)
-			}
-		case "text/html":
-			if reportUri, err = backend.ParseHtmlResponse(part, manifest.Ecosystem); err != nil {
-				return summaryAndReport{}, err
-			}
-		default:
-			return summaryAndReport{}, fmt.Errorf("unknown response type %s", partType)
-		}
+	switch bodyType {
+	case "application/json":
+		return handleJsonResponse(response.Body)
+	case "multipart/mixed":
+		return handleMixedResponse(response.Body, params, manifest.Ecosystem)
+	default:
+		return fmt.Errorf("content type %s is not supported", bodyType)
 	}
-
-	return summaryAndReport{vulSummary, reportUri}, nil
-}
-
-// printSummary is used to print the summary to the standard output as a human-readable data
-// use jsonOut=true to print as a machine-readable json object
-func printSummary(sumAndReport summaryAndReport, jsonOut bool) error {
-	if jsonOut {
-		output, err := json.MarshalIndent(sumAndReport, "", "\t")
-		if err != nil {
-			return err
-		}
-		fmt.Println(string(output))
-	} else {
-		// TODO waiting for this https://github.com/RHEcosystemAppEng/crda-backend/issues/28
-		// include volSummary in the summary print
-		white := color.New(color.FgHiWhite, color.Bold).SprintFunc()
-		fmt.Println(white("Full Report: "), sumAndReport.ReportFileUri)
-	}
-
-	return nil
 }
