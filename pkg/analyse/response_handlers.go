@@ -3,24 +3,21 @@ package analyse
 import (
 	"fmt"
 	"github.com/rhecosystemappeng/crda-cli/pkg/backend"
+	"github.com/rhecosystemappeng/crda-cli/pkg/backend/api"
 	"io"
 	"mime/multipart"
 )
 
 func handleJsonResponse(body io.ReadCloser) error {
-	if reports, err := backend.ParseJsonResponse(body); err != nil {
+	report, err := backend.ParseJsonResponse(body)
+	if err != nil {
 		return err
-	} else {
-		vulSummary, err := processVulnerabilities(reports)
-		if err != nil {
-			return err
-		}
-		return printJson(vulSummary)
 	}
+	return printJson(report)
 }
 
 func handleMixedResponse(body io.ReadCloser, params map[string]string, ecosystem string) error {
-	var vulSummary VulnerabilitiesSummary
+	var report *api.AnalysisReport
 	var reportUri string
 
 	multipartReader := multipart.NewReader(body, params["boundary"])
@@ -28,11 +25,8 @@ func handleMixedResponse(body io.ReadCloser, params map[string]string, ecosystem
 		partType := part.Header.Get("Content-Type")
 		switch partType {
 		case "application/json":
-			reports, err := backend.ParseJsonResponse(part)
+			report, err = backend.ParseJsonResponse(part)
 			if err != nil {
-				return err
-			}
-			if vulSummary, err = processVulnerabilities(reports); err != nil {
 				return err
 			}
 		case "text/html":
@@ -44,5 +38,6 @@ func handleMixedResponse(body io.ReadCloser, params map[string]string, ecosystem
 		}
 	}
 
-	return printSummary(vulSummary, reportUri)
+	printSummary(report, reportUri)
+	return nil
 }

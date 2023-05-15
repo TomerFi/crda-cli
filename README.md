@@ -15,13 +15,44 @@ The _Html_ report is saved as a local file in the OS's temporary folder.
 ```shell
 $ crda analyse /path/to/maven/project/pom.xml
 
-Full Report:  file:///tmp/crda/stack-analysis-maven-1682328584.html
+Summary Report for Dependency Analysis:
+
+Total Scanned Dependencies:  10
+Total Scanned Transitive Dependencies:  193
+Direct Vulnerable Dependencies:  4
+Total Vulnerabilities:  14
+Critical Vulnerabilities:  0
+High Vulnerabilities:  3
+Medium Vulnerabilities:  8
+Low Vulnerabilities:  3
+
+Full Report:  file:///tmp/crda/stack-analysis-maven-1684149652.html
 ```
 
 ## Run using image
 
 Running using and image will **not** create a _Html_ report.
-Instead, it will print the _Json_ version of the report.
+Instead, it will print the _Json_ version of the report.<br/>
+This behavioural is also achievable manually using the `--json` flag:
+
+```shell
+$ crda analyse /path/to/maven/project/pom.xml --json
+
+{
+        "dependencies": {
+                "scanned": 10,
+                "transitive": 193
+        },
+        "vulnerabilities": {
+                "critical": 0,
+                "direct": 4,
+                "high": 3,
+                "low": 3,
+                "medium": 8,
+                "total": 14
+        }
+}
+```
 
 ### Java
 
