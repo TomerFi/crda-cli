@@ -3,6 +3,11 @@ name: Verify OpenAPI Spec
 
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows:
+      - "Stage"
+    types:
+      - completed
   repository_dispatch:
     types: [ backend-openapi-spec-modified ]
 
