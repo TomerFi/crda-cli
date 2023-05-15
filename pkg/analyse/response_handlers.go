@@ -8,15 +8,15 @@ import (
 	"mime/multipart"
 )
 
-func handleJsonResponse(body io.ReadCloser) error {
+func handleJsonResponse(body io.ReadCloser, verboseOut bool) error {
 	report, err := backend.ParseJsonResponse(body)
 	if err != nil {
 		return err
 	}
-	return printJson(report)
+	return printJson(report, verboseOut)
 }
 
-func handleMixedResponse(body io.ReadCloser, params map[string]string, ecosystem string) error {
+func handleMixedResponse(body io.ReadCloser, params map[string]string, ecosystem string, verboseOut bool) error {
 	var report *api.AnalysisReport
 	var reportUri string
 
@@ -38,6 +38,10 @@ func handleMixedResponse(body io.ReadCloser, params map[string]string, ecosystem
 		}
 	}
 
-	printSummary(report, reportUri)
+	if verboseOut {
+		printVerboseSummary(report, reportUri)
+	} else {
+		printSummary(report, reportUri)
+	}
 	return nil
 }
