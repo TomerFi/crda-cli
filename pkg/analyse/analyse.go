@@ -16,11 +16,11 @@ import (
 // It will print a human-readable report summary to the standard output
 // Use jsonOut=true to print the summary as a machine-readable json object
 // Use verbose=true to include private vulnerabilities in the report
-func GetStackReport(ctx context.Context, manifest *Manifest, manifestPath string, jsonOut, verbose bool) error {
+func GetStackReport(ctx context.Context, manifest *Manifest, manifestPath string, jsonOut, verboseOut bool) error {
 	prompts.TelemetryConsentSelect() // if telemetry consent is not set, ask for it
 	// prepare telemetry track event properties
 	telemetry.SetProperty(ctx, telemetry.KeyJSonOutput, jsonOut)
-	telemetry.SetProperty(ctx, telemetry.KeyVerboseOutput, verbose)
+	telemetry.SetProperty(ctx, telemetry.KeyVerboseOutput, verboseOut)
 	telemetry.SetProperty(ctx, telemetry.KeyManifest, manifest.Filename)
 	telemetry.SetProperty(ctx, telemetry.KeyEcosystem, manifest.Ecosystem)
 	// get the content and content type from the concrete tree provider
@@ -62,7 +62,7 @@ func GetStackReport(ctx context.Context, manifest *Manifest, manifestPath string
 		return err
 	}
 	// analyse the response and print the summary
-	if err := parseResponse(response, manifest); err != nil {
+	if err := parseResponse(response, manifest, verboseOut); err != nil {
 		telemetry.SetProperty(ctx, telemetry.KeySuccess, false)
 		telemetry.SetProperty(ctx, telemetry.KeyError, telemetry.MaskErrorContent(err))
 		return err
@@ -72,7 +72,7 @@ func GetStackReport(ctx context.Context, manifest *Manifest, manifestPath string
 	return nil
 }
 
-func parseResponse(response *http.Response, manifest *Manifest) error {
+func parseResponse(response *http.Response, manifest *Manifest, verboseOut bool) error {
 	if response.StatusCode != http.StatusOK {
 		return fmt.Errorf("analyze dependencies request failed, %s", response.Status)
 	}
@@ -84,9 +84,9 @@ func parseResponse(response *http.Response, manifest *Manifest) error {
 
 	switch bodyType {
 	case "application/json":
-		return handleJsonResponse(response.Body)
+		return handleJsonResponse(response.Body, verboseOut)
 	case "multipart/mixed":
-		return handleMixedResponse(response.Body, params, manifest.Ecosystem)
+		return handleMixedResponse(response.Body, params, manifest.Ecosystem, verboseOut)
 	default:
 		return fmt.Errorf("content type %s is not supported", bodyType)
 	}
