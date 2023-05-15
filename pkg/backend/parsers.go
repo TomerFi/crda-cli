@@ -12,7 +12,7 @@ import (
 
 // ParseJsonResponse is used to deserialize the backend application/json type response
 // It will return the unmarshalled response or an error
-func ParseJsonResponse(reader io.ReadCloser) ([]api.DependencyReport, error) {
+func ParseJsonResponse(reader io.ReadCloser) (*api.AnalysisReport, error) {
 	defer reader.Close()
 
 	body, err := io.ReadAll(reader)
@@ -20,11 +20,11 @@ func ParseJsonResponse(reader io.ReadCloser) ([]api.DependencyReport, error) {
 		return nil, err
 	}
 
-	var reports []api.DependencyReport
-	if err := json.Unmarshal(body, &reports); err != nil {
+	var report api.AnalysisReport
+	if err := json.Unmarshal(body, &report); err != nil {
 		return nil, err
 	}
-	return reports, nil
+	return &report, nil
 }
 
 // ParseHtmlResponse is used to deserialized backend text/html type response
