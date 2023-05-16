@@ -78,7 +78,6 @@ Usage:
 
 Available Commands:
   analyse     Preform dependency analysis report
-  auth        Link crda user with snyk
   completion  Generate a completions script
   config      Manage crda config
   help        Help about any command

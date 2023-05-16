@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	oldCliUtils "github.com/fabric8-analytics/cli-tools/pkg/utils"
 	"github.com/rhecosystemappeng/crda-cli/pkg/utils"
 	"os"
 	"path/filepath"
@@ -19,9 +18,6 @@ func (k configKey) ToString() string {
 const (
 	KeyConsentTelemetry configKey = "consent_telemetry"
 	KeyBackendHost      configKey = "crda_backend_host"
-	KeyCrdaKey          configKey = "crda_key"
-	KeyOldHost          configKey = "crda_host"       // TODO remove this once done with old backend
-	KeyOld3ScaleToken   configKey = "crda_auth_token" // TODO remove this once done with old backend
 )
 
 var (
@@ -34,9 +30,6 @@ var (
 var KnownConfigKeyStrings = []string{
 	KeyConsentTelemetry.ToString(),
 	KeyBackendHost.ToString(),
-	KeyCrdaKey.ToString(),
-	KeyOldHost.ToString(),        // TODO remove this once done with old backend
-	KeyOld3ScaleToken.ToString(), // TODO remove this once done with old backend
 }
 
 // Load is used for loading crda config from either
@@ -49,12 +42,10 @@ func Load(configDirectory string) error {
 	viper.SetConfigType(configType)
 	viper.AddConfigPath(configDirectory)
 	// this means viper will look for env vars before config file
-	// i.e. viper.GetString("crda_key") will first look for a CRDA_KEY env var
+	// i.e. viper.GetString("crda_backend_host") will first look for a CRDA_BACKEND_HIST env var
 	viper.AutomaticEnv()
 	// set defaults
 	viper.SetDefault(KeyBackendHost.ToString(), configHostDefault)
-	viper.SetDefault(KeyOldHost.ToString(), oldCliUtils.CRDAHost)             // TODO remove this once done with old backend
-	viper.SetDefault(KeyOld3ScaleToken.ToString(), oldCliUtils.CRDAAuthToken) // TODO remove this once done with old backend
 
 	// load config and create a new file if one doesn't exist
 	if err := viper.ReadInConfig(); err != nil {
