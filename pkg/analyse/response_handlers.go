@@ -8,6 +8,9 @@ import (
 	"mime/multipart"
 )
 
+// handleJsonResponse will deserialize the application/json dependency analysis response body
+// into an api.AnalysisReport and pass it for printing
+// will return error if failed to deserialize
 func handleJsonResponse(body io.ReadCloser, verboseOut bool) error {
 	report, err := backend.ParseJsonResponse(body)
 	if err != nil {
@@ -16,6 +19,10 @@ func handleJsonResponse(body io.ReadCloser, verboseOut bool) error {
 	return printJson(report, verboseOut)
 }
 
+// handleJsonResponse will deserialize the multipart/mixed dependency analysis response body
+// into an api.AnalysisReport and pass it for printing
+// multipart/mixed is constructed from an application/json and a text/html content parts
+// will return error if failed to deserialize
 func handleMixedResponse(body io.ReadCloser, params map[string]string, ecosystem string, verboseOut bool) error {
 	var report *api.AnalysisReport
 	var reportUri string

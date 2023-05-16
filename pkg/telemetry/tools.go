@@ -71,14 +71,14 @@ func isTelemetryConsent() bool {
 }
 
 func MaskErrorContent(err error) string {
-	user, usrErr := user.Current()
+	usr, usrErr := user.Current()
 	if usrErr != nil {
 		return usrErr.Error()
 	}
 
 	sanitized := unwrapError(err).Error()
-	sanitized = strings.ReplaceAll(sanitized, user.HomeDir, "$HOME")
-	sanitized = strings.ReplaceAll(sanitized, user.Username, "$USERNAME")
+	sanitized = strings.ReplaceAll(sanitized, usr.HomeDir, "$HOME")
+	sanitized = strings.ReplaceAll(sanitized, usr.Username, "$USERNAME")
 
 	return sanitized
 }

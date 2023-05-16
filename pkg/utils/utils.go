@@ -12,6 +12,7 @@ func MatchSnykRegex(token string) bool {
 	return regexp.MustCompile(snykTokenRegex).MatchString(token)
 }
 
+// GetProviderUrl is used for generating a vulnerability url based on the vulnerability provider
 func GetProviderUrl(provider, vulnerabilityId string) string {
 	if provider == string(api.DependencyAnalysisParamsProvidersSnyk) {
 		return fmt.Sprint("https://security.snyk.io/vuln/", vulnerabilityId)
