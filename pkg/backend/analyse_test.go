@@ -30,6 +30,7 @@ func TestAnalyzeDependencyTree(t *testing.T) {
 			"some-client",
 			"fake/contenttype",
 			[]byte("fake-content"),
+			make(map[HeaderTokenKeyType]string),
 			false,
 		)
 
@@ -56,6 +57,7 @@ func TestAnalyzeDependencyTree(t *testing.T) {
 			"some-client2",
 			"fake/contenttype2",
 			[]byte("fake-content"),
+			make(map[HeaderTokenKeyType]string),
 			false,
 		)
 

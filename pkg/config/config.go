@@ -15,9 +15,11 @@ func (k configKey) ToString() string {
 	return fmt.Sprint(k)
 }
 
+// keys added here, should also be added to the following KnownConfigKeyStrings slice
 const (
 	KeyConsentTelemetry configKey = "consent_telemetry"
 	KeyBackendHost      configKey = "crda_backend_host"
+	KeySnykToken        configKey = "crda_snyk_token"
 )
 
 var (
@@ -30,6 +32,7 @@ var (
 var KnownConfigKeyStrings = []string{
 	KeyConsentTelemetry.ToString(),
 	KeyBackendHost.ToString(),
+	KeySnykToken.ToString(),
 }
 
 // Load is used for loading crda config from either
