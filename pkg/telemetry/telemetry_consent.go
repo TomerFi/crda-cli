@@ -1,4 +1,4 @@
-package prompts
+package telemetry
 
 import (
 	"fmt"
@@ -20,12 +20,12 @@ var telemetryConsent = promptui.Select{
 	Items: []string{consentYes, consentNo, consentLater},
 }
 
-// TelemetryConsentSelect is used to prompt the user for selecting Yes|No|Later in regard to telemetry consent
+// AskForConsent is used to prompt the user for selecting Yes|No|Later in regard to telemetry consent
 // Yes or No: config will be updated accordingly, and we won't ask again
 // Later: no updates to config, will ask again
 //
 // if consent config already recorded, will not ask at all
-func TelemetryConsentSelect() {
+func AskForConsent() {
 	// if consent config exists, return without asking again
 	if viper.IsSet(config.KeyConsentTelemetry.ToString()) {
 		return
