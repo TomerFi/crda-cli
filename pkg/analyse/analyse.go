@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/rhecosystemappeng/crda-cli/pkg/backend"
 	"github.com/rhecosystemappeng/crda-cli/pkg/config"
-	"github.com/rhecosystemappeng/crda-cli/pkg/prompts"
 	"github.com/rhecosystemappeng/crda-cli/pkg/telemetry"
 	"github.com/spf13/viper"
 	"mime"
@@ -23,7 +22,7 @@ func GetStackReport(
 	tokens map[backend.HeaderTokenKeyType]string,
 	jsonOut, verboseOut bool,
 ) error {
-	prompts.TelemetryConsentSelect() // if telemetry consent is not set, ask for it
+	telemetry.AskForConsent() // if telemetry consent is not set, ask for it
 	// prepare telemetry track event properties
 	telemetry.SetProperty(ctx, telemetry.KeyJSonOutput, jsonOut)
 	telemetry.SetProperty(ctx, telemetry.KeyVerboseOutput, verboseOut)
