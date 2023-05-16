@@ -16,13 +16,25 @@ import (
 // It will print a human-readable report summary to the standard output
 // Use jsonOut=true to print the summary as a machine-readable json object
 // Use verbose=true to include private vulnerabilities in the report
-func GetStackReport(ctx context.Context, manifest *Manifest, manifestPath string, jsonOut, verboseOut bool) error {
+func GetStackReport(
+	ctx context.Context,
+	manifest *Manifest,
+	manifestPath string,
+	tokens map[backend.HeaderTokenKeyType]string,
+	jsonOut, verboseOut bool,
+) error {
 	prompts.TelemetryConsentSelect() // if telemetry consent is not set, ask for it
 	// prepare telemetry track event properties
 	telemetry.SetProperty(ctx, telemetry.KeyJSonOutput, jsonOut)
 	telemetry.SetProperty(ctx, telemetry.KeyVerboseOutput, verboseOut)
 	telemetry.SetProperty(ctx, telemetry.KeyManifest, manifest.Filename)
 	telemetry.SetProperty(ctx, telemetry.KeyEcosystem, manifest.Ecosystem)
+	// handle tokens to be included as request headers to the backend
+	if _, ok := tokens[backend.HeaderTokenSnyk]; ok {
+		telemetry.SetProperty(ctx, telemetry.KeySnykTokenAssociated, true)
+	} else if !jsonOut {
+		fmt.Println("consider configuring a snyk token using `crda config` to include private snyk vulnerabilities in your report, https://app.snyk.io/redhat/snyk-token")
+	}
 	// get the content and content type from the concrete tree provider
 	// these will get delegated to the backend
 	content, contentType, err := manifest.TreeProvider.Provide(ctx, manifestPath)
@@ -41,6 +53,7 @@ func GetStackReport(ctx context.Context, manifest *Manifest, manifestPath string
 		cliClient,
 		contentType,
 		content,
+		tokens,
 		jsonOut,
 	)
 	if err != nil {

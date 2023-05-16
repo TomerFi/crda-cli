@@ -3,6 +3,7 @@ package analyse
 import (
 	"context"
 	"errors"
+	"github.com/rhecosystemappeng/crda-cli/pkg/backend"
 	"github.com/rhecosystemappeng/crda-cli/pkg/config"
 	"github.com/rhecosystemappeng/crda-cli/pkg/telemetry"
 	"github.com/rhecosystemappeng/crda-cli/pkg/utils"
@@ -39,7 +40,7 @@ func TestGetStackReport(t *testing.T) {
 		// create a fake manifest stubbed with the mocked analyzer
 		manifest := Manifest{"fake.filename", "testecosystem", analyzer}
 
-		err := GetStackReport(ctx, &manifest, "fake-path", false, false)
+		err := GetStackReport(ctx, &manifest, "fake-path", make(map[backend.HeaderTokenKeyType]string), false, false)
 		require.Error(t, err)
 		assert.Equal(t, "this is a fake error", err.Error())
 		analyzer.AssertExpectations(t)

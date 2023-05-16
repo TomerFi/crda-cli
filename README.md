@@ -66,6 +66,29 @@ podman run --rm -it \
     quay.io/ecosystem-appeng/crda-cli:staging analyse pom.xml
 ```
 
+## Tokens
+
+### Snyk Token
+
+Set your Snyk token to include Snyk's private vulnerabilities in your report.<br/>
+Instructions for creating the token can be found [here](https://app.snyk.io/redhat/snyk-token).
+
+There are multiple approaches for setting your Snyk token with Crda, processed in the following order:
+Using a command line flag:
+```shell
+crda analyse --snyk-token <snyk-token-goes-here> ...
+```
+
+Using an environment variable:
+```shell
+CRDA_SNYK_TOKEN=<snyk-token-goes-here> crda analyse ...
+```
+
+Or saving it in the config file for re-using:
+```shell
+crda config set crda_snyk_token <snyk-token-goes-here>
+```
+
 ## Help
 
 ```shell
