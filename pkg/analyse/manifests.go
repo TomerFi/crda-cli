@@ -7,23 +7,19 @@ import (
 	"os"
 )
 
+// TreeProvider is used to contract dependency trees providers
+// i.e. Java-Maven, Node-JS
 type TreeProvider interface {
+	// Provide is used for providing a dependency tree that will be used as the backend request body content
+	// it is also in charge of providing the body content type
+	// should return an error if failed to create the dependency tree
 	Provide(ctx context.Context, manifestPath string) ([]byte, string, error)
 }
 
+// Manifest is used as a type for binding a file and ecosystem names with a tree provider
 type Manifest struct {
 	Filename, Ecosystem string
 	TreeProvider
-}
-
-type Provider string
-
-const (
-	ProviderSnyk Provider = "snyk"
-)
-
-func (p Provider) ToString() string {
-	return fmt.Sprint(p)
 }
 
 var (
@@ -54,6 +50,7 @@ func GetManifest(fileName string) (*Manifest, error) {
 	return nil, fmt.Errorf("manifest %s not supported", fileName)
 }
 
+// IsSupportedManifestPath is used to load a manifest file from the OS and verify we can support it
 func IsSupportedManifestPath(filePath string) error {
 	fileInfo, err := os.Stat(filePath)
 	if err != nil {

@@ -29,12 +29,18 @@ type PomDependency struct {
 
 type JavaMavenTreeProvider struct{}
 
+// Provide of the JavaMavenTreeProvider type implementing TreeProvider
+// will load the pom.xml manifest file,
+// and create a dot graph dependency tree as the for the request content with the "text/vnd.graphviz" content type
+// will ignore dependencies marked with a "crdaignore" comment
 func (a *JavaMavenTreeProvider) Provide(ctx context.Context, manifestPath string) ([]byte, string, error) {
+	// verify mvn is accessible on the OS path
 	mvn, err := exec.LookPath("mvn")
 	if err != nil {
 		return nil, "", err
 	}
 
+	// set temp file name and defer its deletion
 	tmpDesTree := filepath.Join(os.TempDir(), "tmp-deps-tree.txt")
 	defer os.Remove(tmpDesTree)
 
@@ -42,7 +48,9 @@ func (a *JavaMavenTreeProvider) Provide(ctx context.Context, manifestPath string
 		os.Remove(tmpDesTree) // if the temp file exists - remove it
 	}
 
+	// construct mvn tree command for creating a dot graph dependency tree and output it to the temp file
 	treeCommand := []string{"-q", "dependency:tree", "-DoutputType=dot", fmt.Sprintf("-DoutputFile=%s", tmpDesTree), "-f", manifestPath}
+	// exclude ignored dependencies from the tree creation
 	if ignoredList := getIgnored(manifestPath); len(ignoredList) > 0 {
 		treeCommand = append(treeCommand, fmt.Sprintf("-Dexcludes=%s", strings.Join(ignoredList, ",")))
 	}

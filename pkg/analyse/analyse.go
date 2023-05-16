@@ -49,7 +49,7 @@ func GetStackReport(ctx context.Context, manifest *Manifest, manifestPath string
 	// get stack report response from backend
 	response, err := backend.AnalyzeDependencyTree(
 		backendHost,
-		JavaMaven.Ecosystem,
+		manifest.Ecosystem,
 		crdaKey,
 		cliClient,
 		contentType,
@@ -72,6 +72,9 @@ func GetStackReport(ctx context.Context, manifest *Manifest, manifestPath string
 	return nil
 }
 
+// parseResponse is used to deserialize a dependency analytics http response
+// handles application/json and multipart/mixed(application/json + text/html) response types
+// will return error if parsing failed or unknown response body type was used
 func parseResponse(response *http.Response, manifest *Manifest, verboseOut bool) error {
 	if response.StatusCode != http.StatusOK {
 		return fmt.Errorf("analyze dependencies request failed, %s", response.Status)

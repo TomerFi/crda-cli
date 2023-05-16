@@ -59,7 +59,3 @@ func TestIsSupportedManifestPath(t *testing.T) {
 		assert.Error(t, IsSupportedManifestPath(os.TempDir()))
 	})
 }
-
-func TestProvider_ToString(t *testing.T) {
-	assert.Equal(t, string(ProviderSnyk), ProviderSnyk.ToString())
-}
