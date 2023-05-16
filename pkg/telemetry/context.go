@@ -22,6 +22,7 @@ const (
 	KeyClient               propertyKeyType = "client"
 	KeyTotalVulnerabilities propertyKeyType = "total-vulnerabilities"
 	KeyEcosystem            propertyKeyType = "ecosystem"
+	KeySnykTokenAssociated  propertyKeyType = "snyk-token-associated"
 	KeyJSonOutput           propertyKeyType = "json"
 	KeyVerboseOutput        propertyKeyType = "verbose"
 	KeySuccess              propertyKeyType = "success"
