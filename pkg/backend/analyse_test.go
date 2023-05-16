@@ -15,7 +15,6 @@ func TestAnalyzeDependencyTree(t *testing.T) {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// verify the request is the one sent by this test
 			if "some-client" == r.Header.Get("Client") &&
-				"crda-user-id-aa11" == r.Header.Get("Uuid") &&
 				"fake/contenttype" == r.Header.Get("Content-Type") {
 				w.WriteHeader(200)
 				_, _ = w.Write(dummyReport)
@@ -28,7 +27,6 @@ func TestAnalyzeDependencyTree(t *testing.T) {
 		report, err := AnalyzeDependencyTree(
 			ts.URL,
 			"maven",
-			"crda-user-id-aa11",
 			"some-client",
 			"fake/contenttype",
 			[]byte("fake-content"),
@@ -44,7 +42,6 @@ func TestAnalyzeDependencyTree(t *testing.T) {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// verify the request is the one sent by this test
 			if "some-client2" == r.Header.Get("Client") &&
-				"crda-user-id-aa12" == r.Header.Get("Uuid") &&
 				"fake/contenttype2" == r.Header.Get("Content-Type") {
 				w.WriteHeader(500)
 				return
@@ -56,7 +53,6 @@ func TestAnalyzeDependencyTree(t *testing.T) {
 		_, err := AnalyzeDependencyTree(
 			ts.URL,
 			"maven",
-			"crda-user-id-aa12",
 			"some-client2",
 			"fake/contenttype2",
 			[]byte("fake-content"),

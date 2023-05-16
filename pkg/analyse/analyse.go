@@ -33,24 +33,11 @@ func GetStackReport(ctx context.Context, manifest *Manifest, manifestPath string
 	}
 	// collect data required for sending requests to the backend
 	cliClient, _ := telemetry.GetProperty(ctx, telemetry.KeyClient)
-	oldHost := viper.GetString(config.KeyOldHost.ToString())                // TODO remove this once done with old backend
-	threeScaleToken := viper.GetString(config.KeyOld3ScaleToken.ToString()) // TODO remove this once done with old backend
 	backendHost := viper.GetString(config.KeyBackendHost.ToString())
-	// if we don't already have a crda user key, ask the backend for a new one
-	var crdaKey string
-	if !viper.IsSet(config.KeyCrdaKey.ToString()) {
-		if newUserKey, err := backend.RequestNewUserKey(oldHost, threeScaleToken, cliClient); err == nil {
-			crdaKey = newUserKey
-			viper.Set(config.KeyCrdaKey.ToString(), newUserKey)
-		}
-	} else {
-		crdaKey = viper.GetString(config.KeyCrdaKey.ToString())
-	}
 	// get stack report response from backend
 	response, err := backend.AnalyzeDependencyTree(
 		backendHost,
 		manifest.Ecosystem,
-		crdaKey,
 		cliClient,
 		contentType,
 		content,
