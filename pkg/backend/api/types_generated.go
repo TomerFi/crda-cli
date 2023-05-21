@@ -85,6 +85,7 @@ type Issue struct {
 	Severity *IssueSeverity `json:"severity,omitempty"`
 	Source   *string        `json:"source,omitempty"`
 	Title    *string        `json:"title,omitempty"`
+	Unique   *bool          `json:"unique,omitempty"`
 }
 
 // IssueSeverity defines model for Issue.Severity.
