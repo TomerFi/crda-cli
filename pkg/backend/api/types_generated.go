@@ -103,6 +103,14 @@ type PackageRef struct {
 	Version *string `json:"version,omitempty"`
 }
 
+// ProviderStatus defines model for ProviderStatus.
+type ProviderStatus struct {
+	Message  *string  `json:"message,omitempty"`
+	Ok       *bool    `json:"ok,omitempty"`
+	Provider *string  `json:"provider,omitempty"`
+	Status   *float32 `json:"status,omitempty"`
+}
+
 // Remediation defines model for Remediation.
 type Remediation struct {
 	IssueRef      *string     `json:"issueRef,omitempty"`
@@ -112,8 +120,9 @@ type Remediation struct {
 
 // Summary defines model for Summary.
 type Summary struct {
-	Dependencies    *DependenciesSummary    `json:"dependencies,omitempty"`
-	Vulnerabilities *VulnerabilitiesSummary `json:"vulnerabilities,omitempty"`
+	Dependencies     *DependenciesSummary    `json:"dependencies,omitempty"`
+	ProviderStatuses *[]ProviderStatus       `json:"providerStatuses,omitempty"`
+	Vulnerabilities  *VulnerabilitiesSummary `json:"vulnerabilities,omitempty"`
 }
 
 // TransitiveDependencyReport defines model for TransitiveDependencyReport.
