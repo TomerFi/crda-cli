@@ -66,10 +66,13 @@ type DependenciesSummary struct {
 
 // DependencyReport defines model for DependencyReport.
 type DependencyReport struct {
-	HighestVulnerability *Issue      `json:"highestVulnerability,omitempty"`
-	Issues               *[]Issue    `json:"issues,omitempty"`
-	Recommendation       *PackageRef `json:"recommendation,omitempty"`
-	Ref                  *PackageRef `json:"ref,omitempty"`
+	// HighestVulnerability Highest vulnerability found for this dependency
+	HighestVulnerability *Issue   `json:"highestVulnerability,omitempty"`
+	Issues               *[]Issue `json:"issues,omitempty"`
+
+	// Recommendation Trusted Content recommendation that is not related to any security vulnerability
+	Recommendation *PackageRef `json:"recommendation,omitempty"`
+	Ref            *PackageRef `json:"ref,omitempty"`
 
 	// Remediations Trusted Content remediation related to identified security vulnerabilities
 	Remediations *map[string]Remediation       `json:"remediations,omitempty"`
