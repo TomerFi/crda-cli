@@ -1,143 +1,143 @@
----
-name: Stage
-
-on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - ".github/**"
-
-jobs:
-  build:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    name: Build for ${{ matrix.os }}
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v3
-
-      - name: Install Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: stable
-          check-latest: true
-
-      - name: Build project
-        run: make build VERSION=staging
-
-      - name: Upload build binary as artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: build
-          path: ./build/
-
-  release:
-    runs-on: ubuntu-latest
-    name: Create a Staging release
-    environment: staging
-    if: github.repository == 'RHEcosystemAppEng/crda-cli'
-    needs: build
-    steps:
-      - name: Download build artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: build
-          path: ./build
-
-      - name: Check for existing staging release
-        id: existing_release
-        uses: actions/github-script@v6
-        continue-on-error: true
-        with:
-          github-token: ${{ secrets.STAGING_PAT }}
-          script: |
-            const repo_name = context.payload.repository.full_name
-            var response = await github.request('GET /repos/' + repo_name + '/releases/tags/staging')
-            // if the request fails (ie 404) the next steps will not occur and the output will not be set
-            core.setOutput('id', response.data.id)
-
-      - name: Delete staging release if exists
-        if: ${{ steps.existing_release.outputs.id }}
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.STAGING_PAT }}
-          script: |
-            const repo_name = context.payload.repository.full_name
-            await github.request('DELETE /repos/' + repo_name + '/releases/' + ${{ steps.existing_release.outputs.id }})
-
-      - name: Delete staging tag if exists
-        continue-on-error: true
-        run: git push --delete origin staging
-
-      # a little pause between deleting the release and creating a new one
-      # without it, the new release might be a weird release, i.e. a draft release
-      - name: Sleep 5
-        run: sleep 5
-
-      - name: Create new staging release
-        id: new_release
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.STAGING_PAT }}
-          script: |
-            const repo_name = context.payload.repository.full_name
-            const response = await github.request('POST /repos/' + repo_name + '/releases', {
-              tag_name: 'staging',
-              name: 'Staging',
-              draft: false,
-              prerelease: true,
-              generate_release_notes: true,
-              make_latest: 'false'
-            })
-            core.setOutput('upload_url', response.data.upload_url)
-
-      - name: Create SHA256 checksums for the binaries
-        working-directory: build
-        run: |
-          for pkg in *
-          do
-            sha256sum "$pkg" > "$pkg.sha256"
-          done
-
-      - name: Upload packages and checksums as staging release assets
-        working-directory: build
-        run: |
-          for file in *
-          do
-            asset_name=$(basename "$file")
-            upload_url=$(echo "${{ steps.new_release.outputs.upload_url }}" | sed "s/{?name,label}/?name=$asset_name/g")
-            curl --data-binary @"$file" \
-            -H "Authorization: token ${{ secrets.STAGING_PAT }}" \
-            -H "Content-Type: application/octet-stream" \
-            "$upload_url"
-          done
-
-  image:
-    runs-on: ubuntu-latest
-    name: Push staging image to Quay.io
-    environment: staging
-    if: github.repository == 'RHEcosystemAppEng/crda-cli'
-    needs: build
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v3
-
-      - name: Cache image layers
-        uses: actions/cache@v3
-        with:
-          path: /home/runner/.local/share/containers/storage/
-          key: ${{ runner.os }}-image-${{ hashFiles('**/Dockerfile') }}
-
-      - name: Login quay.io
-        uses: redhat-actions/podman-login@v1
-        with:
-          username: ${{ secrets.QUAY_IO_ROBOT }}
-          password: ${{ secrets.QUAY_IO_TOKEN }}
-          registry: quay.io
-
-      - name: Build push image quay.io
-        run: make build/image/push
+#---
+#name: Stage
+#
+#on:
+#  workflow_dispatch:
+#  push:
+#    branches:
+#      - main
+#    paths-ignore:
+#      - ".github/**"
+#
+#jobs:
+#  build:
+#    strategy:
+#      matrix:
+#        os: [ubuntu-latest, macos-latest, windows-latest]
+#    runs-on: ${{ matrix.os }}
+#    name: Build for ${{ matrix.os }}
+#    steps:
+#      - name: Checkout sources
+#        uses: actions/checkout@v3
+#
+#      - name: Install Go
+#        uses: actions/setup-go@v4
+#        with:
+#          go-version: stable
+#          check-latest: true
+#
+#      - name: Build project
+#        run: make build VERSION=staging
+#
+#      - name: Upload build binary as artifact
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: build
+#          path: ./build/
+#
+#  release:
+#    runs-on: ubuntu-latest
+#    name: Create a Staging release
+#    environment: staging
+#    if: github.repository == 'RHEcosystemAppEng/crda-cli'
+#    needs: build
+#    steps:
+#      - name: Download build artifacts
+#        uses: actions/download-artifact@v3
+#        with:
+#          name: build
+#          path: ./build
+#
+#      - name: Check for existing staging release
+#        id: existing_release
+#        uses: actions/github-script@v6
+#        continue-on-error: true
+#        with:
+#          github-token: ${{ secrets.STAGING_PAT }}
+#          script: |
+#            const repo_name = context.payload.repository.full_name
+#            var response = await github.request('GET /repos/' + repo_name + '/releases/tags/staging')
+#            // if the request fails (ie 404) the next steps will not occur and the output will not be set
+#            core.setOutput('id', response.data.id)
+#
+#      - name: Delete staging release if exists
+#        if: ${{ steps.existing_release.outputs.id }}
+#        uses: actions/github-script@v6
+#        with:
+#          github-token: ${{ secrets.STAGING_PAT }}
+#          script: |
+#            const repo_name = context.payload.repository.full_name
+#            await github.request('DELETE /repos/' + repo_name + '/releases/' + ${{ steps.existing_release.outputs.id }})
+#
+#      - name: Delete staging tag if exists
+#        continue-on-error: true
+#        run: git push --delete origin staging
+#
+#      # a little pause between deleting the release and creating a new one
+#      # without it, the new release might be a weird release, i.e. a draft release
+#      - name: Sleep 5
+#        run: sleep 5
+#
+#      - name: Create new staging release
+#        id: new_release
+#        uses: actions/github-script@v6
+#        with:
+#          github-token: ${{ secrets.STAGING_PAT }}
+#          script: |
+#            const repo_name = context.payload.repository.full_name
+#            const response = await github.request('POST /repos/' + repo_name + '/releases', {
+#              tag_name: 'staging',
+#              name: 'Staging',
+#              draft: false,
+#              prerelease: true,
+#              generate_release_notes: true,
+#              make_latest: 'false'
+#            })
+#            core.setOutput('upload_url', response.data.upload_url)
+#
+#      - name: Create SHA256 checksums for the binaries
+#        working-directory: build
+#        run: |
+#          for pkg in *
+#          do
+#            sha256sum "$pkg" > "$pkg.sha256"
+#          done
+#
+#      - name: Upload packages and checksums as staging release assets
+#        working-directory: build
+#        run: |
+#          for file in *
+#          do
+#            asset_name=$(basename "$file")
+#            upload_url=$(echo "${{ steps.new_release.outputs.upload_url }}" | sed "s/{?name,label}/?name=$asset_name/g")
+#            curl --data-binary @"$file" \
+#            -H "Authorization: token ${{ secrets.STAGING_PAT }}" \
+#            -H "Content-Type: application/octet-stream" \
+#            "$upload_url"
+#          done
+#
+#  image:
+#    runs-on: ubuntu-latest
+#    name: Push staging image to Quay.io
+#    environment: staging
+#    if: github.repository == 'RHEcosystemAppEng/crda-cli'
+#    needs: build
+#    steps:
+#      - name: Checkout sources
+#        uses: actions/checkout@v3
+#
+#      - name: Cache image layers
+#        uses: actions/cache@v3
+#        with:
+#          path: /home/runner/.local/share/containers/storage/
+#          key: ${{ runner.os }}-image-${{ hashFiles('**/Dockerfile') }}
+#
+#      - name: Login quay.io
+#        uses: redhat-actions/podman-login@v1
+#        with:
+#          username: ${{ secrets.QUAY_IO_ROBOT }}
+#          password: ${{ secrets.QUAY_IO_TOKEN }}
+#          registry: quay.io
+#
+#      - name: Build push image quay.io
+#        run: make build/image/push

@@ -1,36 +1,36 @@
----
-name: Verify OpenAPI Spec
-
-on:
-  workflow_dispatch:
-  workflow_run:
-    workflows:
-      - "Stage"
-    types:
-      - completed
-  repository_dispatch:
-    types: [ backend-openapi-spec-modified ]
-
-jobs:
-  verify_no_generated:
-    runs-on: ubuntu-latest
-    name: Verify Backend OpenAPI Spec
-    environment: integration
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v3
-
-      - name: Install Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: stable
-          check-latest: true
-
-      - name: Download openapi spec
-        run: make download/openapi
-
-      - name: Generate code from spec
-        run: make generate/openapi
-
-      - name: Verify nothing was re-generated
-        run: git diff -s --exit-code
+#---
+#name: Verify OpenAPI Spec
+#
+#on:
+#  workflow_dispatch:
+#  workflow_run:
+#    workflows:
+#      - "Stage"
+#    types:
+#      - completed
+#  repository_dispatch:
+#    types: [ backend-openapi-spec-modified ]
+#
+#jobs:
+#  verify_no_generated:
+#    runs-on: ubuntu-latest
+#    name: Verify Backend OpenAPI Spec
+#    environment: integration
+#    steps:
+#      - name: Checkout sources
+#        uses: actions/checkout@v3
+#
+#      - name: Install Go
+#        uses: actions/setup-go@v4
+#        with:
+#          go-version: stable
+#          check-latest: true
+#
+#      - name: Download openapi spec
+#        run: make download/openapi
+#
+#      - name: Generate code from spec
+#        run: make generate/openapi
+#
+#      - name: Verify nothing was re-generated
+#        run: git diff -s --exit-code

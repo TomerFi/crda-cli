@@ -1,3 +1,14 @@
+<p>
+<strong>This project has been dropped!</strong>
+
+Please use <a href="https://github.com/RHEcosystemAppEng/crda-java-api">Crda Java API</a> or
+<a href="https://github.com/RHEcosystemAppEng/crda-javascript-api">Crda JavaScript API</a> Instead.
+</p>
+
+
+<details>
+<summary>Click here for original README</summary>
+
 # Crda CLI 1.5
 
 This project is still in development mode.
@@ -113,3 +124,5 @@ Flags:
 
 Use "crda [command] --help" for more information about a command.
 ```
+
+</details>

@@ -1,3 +1,15 @@
+<p>
+<strong>This project has been dropped!</strong>
+
+Please use <a href="https://github.com/RHEcosystemAppEng/crda-java-api">Crda Java API</a> or
+<a href="https://github.com/RHEcosystemAppEng/crda-javascript-api">Crda JavaScript API</a> Instead.
+</p>
+
+
+<details>
+<summary>Click here for original CONTRIBUTING.md</summary>
+
+
 ```shell
 $ make help
 
@@ -19,3 +31,5 @@ test/cov:          Run all unit tests and print coverage report, use the COVERAG
 test/mut:          Run mutation tests (will download gremlins to the ./bin folder)
 
 ```
+
+</details>

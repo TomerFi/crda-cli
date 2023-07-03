@@ -1,80 +1,80 @@
----
-name: Pull Request
-
-on:
-  pull_request:
-    branches:
-      - main
-
-env:
-  NO_COLOR: 1
-
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    name: Lint the project
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v3
-
-      - name: Install Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: stable
-          check-latest: true
-
-      - name: Run gofmt
-        run: make fmt
-
-      - name: Lint code
-        uses: golangci/golangci-lint-action@v3
-        with:
-          version: latest
-
-      - name: Lint dockerfile
-        uses: hadolint/hadolint-action@v3.1.0
-
-      - name: Lint ci
-        run: |
-          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
-          ./actionlint -color
-
-  test:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    name: Test PR for ${{ matrix.os }}
-    needs: lint
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v3
-
-      - name: Install Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: stable
-          check-latest: true
-
-      - name: Run unit tests
-        run: make test
-
-      - name: Build the project
-        run: make build
-
-  image:
-    runs-on: ubuntu-latest
-    name: Build the image
-    needs: lint
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v3
-
-      - name: Cache image layers
-        uses: actions/cache@v3
-        with:
-          path: /home/runner/.local/share/containers/storage/
-          key: ${{ runner.os }}-image-${{ hashFiles('**/Dockerfile') }}
-
-      - name: Build the image
-        run: make build/image
+#---
+#name: Pull Request
+#
+#on:
+#  pull_request:
+#    branches:
+#      - main
+#
+#env:
+#  NO_COLOR: 1
+#
+#jobs:
+#  lint:
+#    runs-on: ubuntu-latest
+#    name: Lint the project
+#    steps:
+#      - name: Checkout sources
+#        uses: actions/checkout@v3
+#
+#      - name: Install Go
+#        uses: actions/setup-go@v4
+#        with:
+#          go-version: stable
+#          check-latest: true
+#
+#      - name: Run gofmt
+#        run: make fmt
+#
+#      - name: Lint code
+#        uses: golangci/golangci-lint-action@v3
+#        with:
+#          version: latest
+#
+#      - name: Lint dockerfile
+#        uses: hadolint/hadolint-action@v3.1.0
+#
+#      - name: Lint ci
+#        run: |
+#          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+#          ./actionlint -color
+#
+#  test:
+#    strategy:
+#      matrix:
+#        os: [ubuntu-latest, macos-latest, windows-latest]
+#    runs-on: ${{ matrix.os }}
+#    name: Test PR for ${{ matrix.os }}
+#    needs: lint
+#    steps:
+#      - name: Checkout sources
+#        uses: actions/checkout@v3
+#
+#      - name: Install Go
+#        uses: actions/setup-go@v4
+#        with:
+#          go-version: stable
+#          check-latest: true
+#
+#      - name: Run unit tests
+#        run: make test
+#
+#      - name: Build the project
+#        run: make build
+#
+#  image:
+#    runs-on: ubuntu-latest
+#    name: Build the image
+#    needs: lint
+#    steps:
+#      - name: Checkout sources
+#        uses: actions/checkout@v3
+#
+#      - name: Cache image layers
+#        uses: actions/cache@v3
+#        with:
+#          path: /home/runner/.local/share/containers/storage/
+#          key: ${{ runner.os }}-image-${{ hashFiles('**/Dockerfile') }}
+#
+#      - name: Build the image
+#        run: make build/image
